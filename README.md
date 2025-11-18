@@ -22,4 +22,17 @@ Setup (Windows, cmd.exe):
    streamlit run streamlit_app.py
    ```
 
+   If you see an error like `No module named streamlit`, ensure the venv is
+   activated (step 1). Alternatively, run Streamlit with the venv’s Python:
+
+   ```cmd
+   s:\project\data-structures\proj-env\Scripts\python.exe -m streamlit run streamlit_app.py
+   ```
+
+   To use a custom port (e.g., if 8501 is taken):
+
+   ```cmd
+   s:\project\data-structures\proj-env\Scripts\python.exe -m streamlit run streamlit_app.py --server.port 8520
+   ```
+
 The app allows adding words, searching for full words, and checking prefixes. Words are stored in session state and will reset when the Streamlit session restarts.

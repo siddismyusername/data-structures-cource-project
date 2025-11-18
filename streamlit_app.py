@@ -8,6 +8,8 @@ THIS_DIR = os.path.dirname(__file__)
 MODULE_PATH = os.path.join(THIS_DIR, "data-structure.py")
 
 spec = importlib.util.spec_from_file_location("data_structure_module", MODULE_PATH)
+if spec is None or spec.loader is None:
+    raise ImportError(f"Unable to load module spec from {MODULE_PATH}")
 data_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(data_module)
 
@@ -93,6 +95,8 @@ def main():
                         st.session_state.trie.insert(w)
                         st.session_state.words.append(w)
                         st.success(f"Added '{w}'")
+                        # Ensure the visualizer updates immediately on this interaction
+                        st.rerun()
                     else:
                         st.error("Enter a non-empty word.")
 
@@ -157,6 +161,8 @@ def main():
                                     st.session_state.trie.insert(sug)
                                     st.session_state.words.append(sug)
                                     st.success(f"Added '{sug}'")
+                                    # Immediately refresh so the graph shows the latest state
+                                    st.rerun()
 
         st.markdown("---")
         st.caption("Spelling suggestions use simple similarity against current session words (difflib).")
