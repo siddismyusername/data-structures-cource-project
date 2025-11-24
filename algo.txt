@@ -1,0 +1,201 @@
+ALGORITHM Initialize_App()
+INPUT: None
+OUTPUT: Empty Trie data structure in session state
+
+1. Load Trie class from data-structure.py using dynamic import
+2. IF session_state does NOT contain 'trie' THEN
+   a. Create new empty Trie instance
+   b. Store in session_state.trie
+   c. Initialize empty list session_state.words = []
+3. Create two tabs: "Visualizer" and "Playground"
+
+
+
+ALGORITHM Visualize_Trie()
+INPUT: Trie root node from session_state
+OUTPUT: Graphviz diagram
+
+1. CALL trie_to_dot(trie.root) → returns (labels, edges, next_id)
+   a. Initialize empty labels dict and edges list
+   b. FOR each node in Trie (depth-first traversal):
+      i.   Assign unique node_id
+      ii.  IF node.is_end_of_word THEN label = "*" ELSE label = ""
+      iii. FOR each child character ch in node.children:
+           - Assign child a new node_id
+           - Add edge (parent_id, child_id, ch) to edges list
+           - Recursively process child node
+   c. RETURN all collected labels and edges
+
+2. CALL build_dot(labels, edges) → returns DOT string
+   a. Start DOT format: "digraph Trie {"
+   b. FOR each node_id in labels:
+      i.  IF label = "*" THEN shape = doublecircle (end-of-word marker)
+      ii. ELSE shape = circle (intermediate node)
+   c. FOR each edge (a, b, ch) in edges:
+      i. Add directed edge: "a -> b [label='ch']"
+   d. Close DOT format: "}"
+   e. RETURN DOT string
+
+3. Render DOT string using st.graphviz_chart()
+
+
+
+ALGORITHM Add_Word()
+INPUT: word (string from user input)
+OUTPUT: Updated Trie and word list
+
+1. GET word from text input field
+2. IF form submitted THEN
+   a. IF word is NOT empty THEN
+      i.   w = word.strip().lower()  // normalize
+      ii.  CALL session_state.trie.insert(w)
+           - Start at root node
+           - FOR each character in w:
+             * IF character NOT in current_node.children THEN
+               - Create new TrieNode
+               - Add to current_node.children[character]
+             * Move to current_node.children[character]
+           - Mark final node.is_end_of_word = True
+      iii. APPEND w to session_state.words list
+      iv.  Display success message
+      v.   CALL st.rerun() to refresh visualization
+   b. ELSE
+      i. Display error message
+
+
+ALGORITHM Search_Word()
+INPUT: search_word (string from user input)
+OUTPUT: Found status + optional spelling suggestions
+
+1. GET search_word from text input
+2. IF Search button clicked THEN
+   a. IF search_word is NOT empty THEN
+      i.   s = search_word.strip().lower()
+      ii.  CALL session_state.trie.search(s)
+           - Start at root node
+           - FOR each character in s:
+             * IF character NOT in current_node.children THEN
+               - RETURN False
+             * Move to current_node.children[character]
+           - RETURN current_node.is_end_of_word
+      
+      iii. IF found THEN
+           - Display success message
+      iv.  ELSE
+           - Display warning message
+           - CALL get_spelling_suggestions(s, session_state.words, n=5, cutoff=0.6)
+           - IF suggestions exist THEN
+             * Display "Did you mean: " + suggestions
+   b. ELSE
+      i. Display error message
+
+
+
+ALGORITHM Check_Prefix()
+INPUT: prefix (string from user input)
+OUTPUT: Boolean indicating if prefix exists
+
+1. GET prefix from text input
+2. IF Check Prefix button clicked THEN
+   a. IF prefix is NOT empty THEN
+      i.   p = prefix.strip().lower()
+      ii.  CALL session_state.trie.starts_with(p)
+           - Start at root node
+           - FOR each character in p:
+             * IF character NOT in current_node.children THEN
+               - RETURN False
+             * Move to current_node.children[character]
+           - RETURN True (entire prefix path exists)
+      
+      iii. IF exists THEN
+           - Display success message
+      iv.  ELSE
+           - Display warning message
+   b. ELSE
+      i. Display error message
+
+
+ALGORITHM Spelling_Helper()
+INPUT: spell_word (string from user input)
+OUTPUT: List of suggestions with Add buttons
+
+1. GET spell_word from text input
+2. IF Suggest Spelling button clicked THEN
+   a. IF spell_word is empty THEN
+      i. Display error message
+      ii. EXIT
+   
+   b. IF session_state.words is empty THEN
+      i. Display "No words in dictionary" message
+      ii. EXIT
+   
+   c. s = spell_word.strip().lower()
+   d. CALL difflib.get_close_matches(s, session_state.words, n=8, cutoff=0.5)
+      i.   FOR each word in session_state.words:
+           - Calculate similarity ratio using SequenceMatcher
+           - Ratio = 2 * matching_blocks / total_length
+      ii.  FILTER words WHERE ratio >= 0.5
+      iii. SORT by ratio (descending)
+      iv.  RETURN top 8 matches
+   
+   e. IF no suggestions THEN
+      i. Display "No similar words found"
+   
+   f. ELSE
+      i.   Display "Suggestions:"
+      ii.  FOR each suggestion in suggestions:
+           - Create two columns (6:1 ratio)
+           - Column 1: Display suggestion text
+           - Column 2: Display "Add" button
+           - IF Add button clicked THEN
+             * CALL session_state.trie.insert(suggestion)
+             * APPEND suggestion to session_state.words
+             * Display success message
+             * CALL st.rerun() to refresh visualization
+
+
+
+ALGORITHM Calculate_Similarity(word1, word2)
+INPUT: Two strings to compare
+OUTPUT: Similarity ratio (0.0 to 1.0)
+
+1. Create SequenceMatcher object with word1 and word2
+2. Find matching character blocks between words
+   a. Use dynamic programming to find longest common subsequences
+   b. Identify all matching blocks (position pairs)
+3. Calculate ratio:
+   ratio = 2.0 * (sum of matching block lengths) / (len(word1) + len(word2))
+4. RETURN ratio
+
+EXAMPLE:
+word1 = "apple", word2 = "aple"
+- Matching blocks: "a", "pl", "e" = 4 characters
+- ratio = 2.0 * 4 / (5 + 4) = 8 / 9 ≈ 0.889
+
+
+
+ALGORITHM Manage_Session_State()
+INPUT: User interactions
+OUTPUT: Persistent data across reruns
+
+1. session_state.trie: Single Trie instance (persists across interactions)
+2. session_state.words: List of all added words (for similarity matching)
+3. ON each user interaction:
+   a. Streamlit reruns entire script from top
+   b. session_state persists between reruns
+   c. Trie structure remains intact
+   d. Words list remains intact
+4. ON page refresh/reload:
+   a. session_state clears
+   b. New empty Trie created
+   c. All words lost
+
+
+
+User Input → Normalize (strip, lowercase) → Trie Operation
+                                          ↓
+                          Update session_state (trie + words)
+                                          ↓
+                                    st.rerun()
+                                          ↓
+            Re-render entire app with updated state → Visualizer shows new graph

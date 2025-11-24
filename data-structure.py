@@ -1,38 +1,26 @@
 class TrieNode:
     """A single node in the Trie (a branch point)."""
     def __init__(self):
-        # Maps a character (like 'a') to another TrieNode
         self.children = {}
         
-        # This is the "star" 🌟 we talked about.
-        # It's True if a word ends at this node.
         self.is_end_of_word = False
 
 class Trie:
     """The main Trie data structure."""
     def __init__(self):
-        # The root is the "trunk" of the tree.
-        # It's an empty node to start from.
         self.root = TrieNode()
 
     def insert(self, word):
         """Adds a word to the Trie."""
         
-        # Always start from the trunk (root)
         current_node = self.root
         
-        # Go through each letter in the word
         for char in word:
-            # Check if this letter is already a branch (child)
             if char not in current_node.children:
-                # If not, create a new branch (a new TrieNode)
                 current_node.children[char] = TrieNode()
             
-            # Follow the branch to the next node
             current_node = current_node.children[char]
         
-        # After the loop, we are at the last letter.
-        # We put a "star" here to mark the end of the word.
         current_node.is_end_of_word = True
         print(f"Successfully added '{word}' to the Trie.")
 
@@ -41,14 +29,10 @@ class Trie:
         current_node = self.root
         
         for char in word:
-            # If the letter (branch) doesn't exist, the word isn't here.
             if char not in current_node.children:
                 return False
-            # Follow the branch
             current_node = current_node.children[char]
             
-        # We found the path, but is it a *word*?
-        # We must check for the "star" 🌟.
         return current_node.is_end_of_word
 
     def starts_with(self, prefix):
@@ -56,17 +40,13 @@ class Trie:
         current_node = self.root
         
         for char in prefix:
-            # If the path breaks, no word can start with this.
             if char not in current_node.children:
                 return False
             current_node = current_node.children[char]
             
-        # The entire prefix path exists, so it's a valid start.
         return True
 
-# --- Main program to run ---
 if __name__ == "__main__":
-    # Create our magical word tree
     my_trie = Trie()
     print("Created a new, empty Trie (word tree)!")
     print("-" * 20)
@@ -85,7 +65,6 @@ if __name__ == "__main__":
             break
             
         elif choice == '1':
-            # --- ADD A WORD ---
             word_to_add = input("Enter the word to ADD: ").strip().lower()
             if word_to_add:
                 my_trie.insert(word_to_add)
@@ -93,7 +72,6 @@ if __name__ == "__main__":
                 print("Please enter a valid word.")
                 
         elif choice == '2':
-            # --- SEARCH FOR A WORD ---
             word_to_search = input("Enter the word to SEARCH for: ").strip().lower()
             if word_to_search:
                 if my_trie.search(word_to_search):
@@ -104,7 +82,6 @@ if __name__ == "__main__":
                 print("Please enter a valid word.")
 
         elif choice == '3':
-            # --- CHECK FOR A PREFIX ---
             prefix_to_check = input("Enter the PREFIX to check: ").strip().lower()
             if prefix_to_check:
                 if my_trie.starts_with(prefix_to_check):
