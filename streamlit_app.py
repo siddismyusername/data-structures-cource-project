@@ -3,7 +3,6 @@ import os
 import streamlit as st
 import difflib
 
-# Load the Trie from data-structure.py dynamically to avoid import path issues
 THIS_DIR = os.path.dirname(__file__)
 MODULE_PATH = os.path.join(THIS_DIR, "data-structure.py")
 
@@ -13,7 +12,6 @@ if spec is None or spec.loader is None:
 data_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(data_module)
 
-# Grab the Trie class
 Trie = getattr(data_module, "Trie")
 
 
@@ -27,7 +25,6 @@ def trie_to_dot(node, node_id=0, labels=None, edges=None):
     if edges is None:
         edges = []
 
-    # label for this node: show '*' if end of word
     labels[node_id] = "*" if node.is_end_of_word else ""
 
     next_id = node_id + 1
@@ -43,7 +40,6 @@ def trie_to_dot(node, node_id=0, labels=None, edges=None):
 def build_dot(labels, edges):
     lines = ["digraph Trie {", "  node [shape=circle];"]
     for nid, lab in labels.items():
-        # show label and mark end of word with a doublecircle
         if lab == "*":
             lines.append(f'  {nid} [label="{nid}*", shape=doublecircle];')
         else:
@@ -59,14 +55,12 @@ def build_dot(labels, edges):
 def main():
     st.title("Trie Visualizer & Playground")
 
-    # Use session state to persist trie across reruns
     if "trie" not in st.session_state:
         st.session_state.trie = Trie()
         st.session_state.words = []
 
     tab = st.tabs(["Visualizer", "Playground"])
 
-    # --- Visualizer tab ---
     with tab[0]:
         st.header("Trie Graphviz Visualizer")
         st.write("Visual representation of the Trie. Add words in the Playground tab to populate the graph.")
@@ -74,18 +68,14 @@ def main():
         labels, edges, _ = trie_to_dot(st.session_state.trie.root)
         dot = build_dot(labels, edges)
 
-        # Streamlit supports graphviz_chart; we provide the dot string
         st.graphviz_chart(dot)
 
-        # 'Show DOT source' removed per request
 
-    # --- Playground tab ---
     with tab[1]:
         st.header("Playground: add / search / prefix / spelling helper")
 
         col1, col2 = st.columns(2)
         with col1:
-            # Use a form so the text input and submit are sent together on one click
             with st.form(key="add_form"):
                 word_to_add = st.text_input("Word to add", key="add_input")
                 submitted = st.form_submit_button("Add")
@@ -95,7 +85,6 @@ def main():
                         st.session_state.trie.insert(w)
                         st.session_state.words.append(w)
                         st.success(f"Added '{w}'")
-                        # Ensure the visualizer updates immediately on this interaction
                         st.rerun()
                     else:
                         st.error("Enter a non-empty word.")
@@ -117,7 +106,6 @@ def main():
                         st.success(f"The word '{s}' exists in the Trie.")
                     else:
                         st.warning(f"The word '{s}' was NOT found.")
-                        # spelling suggestions using difflib
                         if st.session_state.words:
                             suggestions = difflib.get_close_matches(s, st.session_state.words, n=5, cutoff=0.6)
                             if suggestions:
@@ -137,7 +125,6 @@ def main():
                 else:
                     st.error("Enter a prefix to check.")
 
-            # --- Spelling helper ---
             st.markdown("#### Spelling helper")
             spell_word = st.text_input("Word to check spelling", key="spell_input")
             if st.button("Suggest spelling", key="suggest_button"):
@@ -156,12 +143,10 @@ def main():
                             for i, sug in enumerate(suggestions):
                                 a, b = st.columns([6,1])
                                 a.write(sug)
-                                # unique key per suggestion so Streamlit can handle clicks
                                 if b.button("Add", key=f"add_sug_{i}_{sug}"):
                                     st.session_state.trie.insert(sug)
                                     st.session_state.words.append(sug)
                                     st.success(f"Added '{sug}'")
-                                    # Immediately refresh so the graph shows the latest state
                                     st.rerun()
 
         st.markdown("---")
